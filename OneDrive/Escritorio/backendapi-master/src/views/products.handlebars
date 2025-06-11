@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Productos</title>
+</head>
+<body>
+  <h1>Productos</h1>
+
+  <form method="GET" action="/">
+    <label>Limite:
+      <input type="number" name="limit" value="{{query.limit}}" min="1" />
+    </label>
+
+    <label>Pagina:
+      <input type="number" name="page" value="{{query.page}}" min="1" />
+    </label>
+
+    <label>Categoria:
+      <input type="text" name="category" value="{{query.category}}" />
+    </label>
+
+    <label>Estado:
+      <select name="status">
+        <option value="">Todos</option>
+        <option value="true" {{#if (eq query.status "true")}}selected{{/if}}>Activo</option>
+        <option value="false" {{#if (eq query.status "false")}}selected{{/if}}>Inactivo</option>
+      </select>
+    </label>
+
+    <label>Orden:
+      <select name="sort">
+        <option value="">Sin orden</option>
+        <option value="asc" {{#if (eq query.sort "asc")}}selected{{/if}}>Precio Ascendente</option>
+        <option value="desc" {{#if (eq query.sort "desc")}}selected{{/if}}>Precio Descendente</option>
+      </select>
+    </label>
+
+    <button type="submit">Filtrar</button>
+  </form>
+
+  <ul>
+    {{#each products}}
+      <li>
+        <h3>{{title}}</h3>
+        <p>{{description}}</p>
+        <p>Precio: ${{price}}</p>
+        <p>Categoría: {{category}}</p>
+        <p>Stock: {{stock}}</p>
+        <p>Estado: {{#if status}}Activo{{else}}Inactivo{{/if}}</p>
+      </li>
+    {{/each}}
+  </ul>
+
+  <div>
+    {{#if hasPrevPage}}
+      <a href="/?limit={{query.limit}}&page={{prevPage}}&category={{query.category}}&status={{query.status}}&sort={{query.sort}}">Anterior</a>
+    {{/if}}
+
+    Página {{page}} de {{totalPages}}
+
+    {{#if hasNextPage}}
+      <a href="/?limit={{query.limit}}&page={{nextPage}}&category={{query.category}}&status={{query.status}}&sort={{query.sort}}">Siguiente</a>
+    {{/if}}
+  </div>
+</body>
+</html>
