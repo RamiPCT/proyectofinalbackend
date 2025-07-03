@@ -1,72 +1,59 @@
+import mongoose from 'mongoose';
 
-import { Cart } from '../../models/carts.js';
+const cartSchema = new mongoose.Schema({
+  products: [
+    {
+      product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+      quantity: { type: Number, default: 1 }
+    }
+  ]
+});
+
+const CartModel = mongoose.model('Cart', cartSchema);
 
 export default class CartMongoDAO {
-  async createCart() {
-    const cart = new Cart({ products: [] });
-    await cart.save();
-    return cart.toObject();
+  async getAll() {
+    return await CartModel.find().populate('products.product');
   }
 
-  async getCartByIdPopulated(cid) {
-    return await Cart.findById(cid).populate('products.product').lean();
+  async getById(id) {
+    return await CartModel.findById(id).populate('products.product');
   }
 
-  async addProductToCart(cid, pid) {
-    const cart = await Cart.findById(cid);
-    if (!cart) throw new Error('Carrito no encontrado');
+  async create() {
+    return await CartModel.create({ products: [] });
+  }
 
-    const productInCart = cart.products.find(p => p.product.toString() === pid);
-    if (productInCart) {
-      productInCart.quantity++;
+  async addProduct(cartId, productId) {
+    const cart = await CartModel.findById(cartId);
+    if (!cart) return null;
+
+    const existingProduct = cart.products.find(p => p.product.equals(productId));
+    if (existingProduct) {
+      existingProduct.quantity++;
     } else {
-      cart.products.push({ product: pid, quantity: 1 });
+      cart.products.push({ product: productId });
     }
 
-    await cart.save();
-    return cart.toObject();
+    return await cart.save();
   }
 
-  async removeProductFromCart(cid, pid) {
-    const cart = await Cart.findById(cid);
+  async updateQuantity(cartId, productId, quantity) {
+    const cart = await CartModel.findById(cartId);
     if (!cart) return null;
 
-    cart.products = cart.products.filter(p => p.product.toString() !== pid);
-    await cart.save();
-    return cart.toObject();
+    const prod = cart.products.find(p => p.product.equals(productId));
+    if (!prod) return null;
+
+    prod.quantity = quantity;
+    return await cart.save();
   }
 
-  async updateCartProducts(cid, newProducts) {
-    const cart = await Cart.findById(cid);
+  async removeProduct(cartId, productId) {
+    const cart = await CartModel.findById(cartId);
     if (!cart) return null;
 
-    cart.products = newProducts.map(p => ({
-      product: p.product,
-      quantity: p.quantity || 1
-    }));
-
-    await cart.save();
-    return cart.toObject();
-  }
-
-  async updateProductQuantity(cid, pid, quantity) {
-    const cart = await Cart.findById(cid);
-    if (!cart) return null;
-
-    const productInCart = cart.products.find(p => p.product.toString() === pid);
-    if (!productInCart) return null;
-
-    productInCart.quantity = quantity;
-    await cart.save();
-    return cart.toObject();
-  }
-
-  async clearCart(cid) {
-    const cart = await Cart.findById(cid);
-    if (!cart) return null;
-
-    cart.products = [];
-    await cart.save();
-    return cart.toObject();
+    cart.products = cart.products.filter(p => !p.product.equals(productId));
+    return await cart.save();
   }
 }
